@@ -54,12 +54,14 @@ body.sdb-unlocked #sdb-tools{display:flex}
   <form id="sdb-login-card">
     <div style="font-size:28px;text-align:center">🔐</div>
     <h2 style="font-size:22px;font-weight:800;text-align:center;margin:8px 0">Student Dashboard</h2>
-    <p style="text-align:center;color:#64748b;font-size:13px">Teacher access required</p>
-    <label for="sdb-password" style="display:block;font-weight:700;font-size:13px;margin-top:18px">Enter password</label>
-    <input id="sdb-password" type="password" autocomplete="current-password" placeholder="Teacher password" required>
+    <p style="text-align:center;color:#64748b;font-size:13px">Student / Teacher login required</p>
+    <label for="sdb-username" style="display:block;font-weight:700;font-size:13px;margin-top:18px">Username</label>
+    <input id="sdb-username" type="text" autocomplete="username" placeholder="Enter your username" required>
+    <label for="sdb-password" style="display:block;font-weight:700;font-size:13px;margin-top:10px">Password</label>
+    <input id="sdb-password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
     <div id="sdb-login-error" aria-live="polite"></div>
     <button type="submit">Unlock Dashboard</button>
-    <p style="font-size:11px;color:#64748b;text-align:center;margin-top:14px">Basic on-page password barrier</p>
+    <p style="font-size:11px;color:#64748b;text-align:center;margin-top:14px">Password rule: first two letters of username + @123</p>
   </form>
 </div>
 <div id="sdb-tools" aria-label="Teacher tools">
@@ -81,11 +83,17 @@ body.sdb-unlocked #sdb-tools{display:flex}
 </div>
 <script id="sdb-teacher-access">
 (function(){
-  const PASSWORD = "Bh@123";
+  const PASSWORD_SUFFIX = "@123";
   const login = document.getElementById("sdb-login");
   const form = document.getElementById("sdb-login-card");
+  const usernameField = document.getElementById("sdb-username");
   const field = document.getElementById("sdb-password");
   const error = document.getElementById("sdb-login-error");
+  function expectedPassword(username){
+    const letters = String(username || "").trim().replace(/[^a-z]/gi,"");
+    if(letters.length < 2) return "";
+    return letters.charAt(0).toUpperCase() + letters.charAt(1).toLowerCase() + PASSWORD_SUFFIX;
+  }
   function unlock(){
     document.body.classList.add("sdb-unlocked");
     login.style.display = "none";
@@ -95,13 +103,16 @@ body.sdb-unlocked #sdb-tools{display:flex}
     document.body.classList.remove("sdb-unlocked");
     login.style.display = "flex";
     field.value = "";
+    usernameField.value = "";
     try { sessionStorage.removeItem("sdbTeacherUnlocked"); } catch(e) {}
   }
   try { if(sessionStorage.getItem("sdbTeacherUnlocked")==="1") unlock(); } catch(e) {}
   form.addEventListener("submit",function(e){
     e.preventDefault();
-    if(field.value===PASSWORD){error.textContent="";unlock();}
-    else{error.textContent="Incorrect password. Please try again.";field.select();}
+    const username = usernameField.value.trim();
+    const expected = expectedPassword(username);
+    if(expected && field.value===expected){error.textContent="";unlock();}
+    else{error.textContent="Incorrect username or password. Use the first two letters of your username + @123.";field.select();}
   });
   document.getElementById("sdb-lock").addEventListener("click",lock);
   document.getElementById("sdb-print").addEventListener("click",function(){window.print();});
